@@ -1,0 +1,15 @@
+#!/bin/sh
+
+col_ahe='[1;34m'
+col_off='[m'
+
+git branch -v             | \
+	sed 's;^\*\? \+;;'      | \
+	grep -F '['             | \
+	awk '{print $1 " " $4}' | \
+	sed 's;]$;;'            | \
+	while read branch ahead
+	do
+		echo "$col_ahe$branch ahead $ahead$col_off"
+		git log -$ahead $branch
+	done | less -RF

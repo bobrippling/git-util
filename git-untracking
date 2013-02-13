@@ -1,0 +1,7 @@
+#!/bin/sh
+
+git branch          | \
+	sed 's/^\*\? *//' | \
+	while read b
+	do grep -FA2 "branch \"$b\"" .git/config > /dev/null || echo $b
+	done

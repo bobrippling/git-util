@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ $# -ne 1 ]
+then
+	echo "Usage: $0 branch" >&2
+	exit 1
+fi
+
+set -e
+git tag "$1" "$1"
+echo "Created tag $1"
+git branch -D "$1"

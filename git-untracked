@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if [ $# -ne 0 ]
+then
+    echo >&2 "Usage: $0"
+    exit 1
+fi
+
+git status          | \
+	awk '
+BEGIN { x = 0 }
+/^#.*include/ { x = 1 }
+{ if(x && x++ > 1)
+		print }'        | \
+		sed '1d;$d;'    | \
+		awk '{print $2}'

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ $# -ne 1 ]
+then
+	echo "Usage: $0 [ahead|behind]" >&2
+	exit 1
+fi
+
+git branch -v               | \
+	grep "$1"' [0-9]\+\]' | \
+	sed 's/^. *//'            | \
+	sed 's/^\([^ ]*\).*'"$1"' \([0-9]*\)\].*/\1 \2/'

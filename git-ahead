@@ -1,7 +1,3 @@
 #!/bin/sh
 
-git branch -v                     | \
-	sed 's;^\*\? \+;;'              | \
-	sed -n '/^[^ ]\+ \+[^ ]\+ \[/p' | \
-	awk '{print $1 " " $4}'         | \
-	sed 's;]$;;'
+git-ahead-behind ahead $@

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+f="$1"
+t=/tmp/git_rewrite_$$
+
+trap "rm -f $t" EXIT
+
+sed 's/^pick .*/&\nx git commit --amend --reset-author/' "$f" > "$t"
+mv "$t" "$f"

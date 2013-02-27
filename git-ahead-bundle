@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ $# -ne 0 ]
+then
+	echo "Usage: $0" >&2
+	exit 1
+fi
+
+git-ahead | while read b n
+do
+	git bundle create                       \
+		"$(echo "$b" | sed 's;/;_;g')".bundle \
+		origin/"$b".."$b"
+done

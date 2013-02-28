@@ -1,0 +1,3 @@
+#!/bin/sh
+
+git di $@ | git apply --cached --whitespace=strip

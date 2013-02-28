@@ -8,7 +8,7 @@ fi
 
 git-ahead | while read b n
 do
-	f="$(basename "$(pwd)").$(echo "$b" | sed 's;/;_;g')"
+	f="$(basename "$(pwd)").$(echo "$b" | tr / _)"
 
 	git bundle create "$f".bundle origin/"$b".."$b"
 done

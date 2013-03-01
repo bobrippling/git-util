@@ -8,7 +8,9 @@ fi
 
 git-ahead | while read b n
 do
-	f="$(basename "$(pwd)").$(echo "$b" | tr / _)"
+	f="$(basename "$(pwd)").$(echo "$b" | tr / _)".bundle
 
-	git bundle create "$f".bundle origin/"$b".."$b"
+	git bundle create "$f" origin/"$b".."$b"
+
+	echo "wrote $f"
 done

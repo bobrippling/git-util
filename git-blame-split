@@ -1,0 +1,31 @@
+#!/bin/sh
+
+if [ $# -ne 1 ]
+then
+	echo "Usage: $0 file" >&2
+	exit 1
+fi
+
+A=/tmp/blame_$$.who
+B=/tmp/blame_$$.b."`echo $@ | tr / _`"
+
+trap "rm -f '$A' '$B'" exit
+
+git blame "$1" | perl -ne '
+BEGIN {
+	open A, ">", "'"$A"'" or die;
+	open B, ">", "'"$B"'" or die;
+}
+
+END {
+	close A;
+	close B;
+}
+
+# just the one space
+/([^)]+\)) (.*)/;
+print A $1, $/;
+print B $2, $/;
+'
+
+vim -O "$A" "$B"

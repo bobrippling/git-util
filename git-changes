@@ -6,5 +6,5 @@ col_off='[m'
 git-ahead | while read branch ahead
 	do
 		echo "$col_ahe$branch ahead $ahead$col_off"
-		git log -$ahead $branch
+		git log --color=always -$ahead $branch $@
 	done | less -RF

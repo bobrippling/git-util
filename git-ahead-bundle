@@ -6,11 +6,16 @@ then
 	exit 1
 fi
 
+tlog=/tmp/bundle.$$
+echo > $tlog
+trap "rm -f $tlog" EXIT
+
 git-ahead | while read b n
 do
 	f="$(basename "$(pwd)").$(echo "$b" | tr / _)".bundle
 
 	git bundle create "$f" origin/"$b".."$b"
-
-	echo "wrote $f"
+	echo "wrote $f" >> $tlog
 done
+
+cat $tlog

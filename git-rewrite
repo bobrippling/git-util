@@ -6,6 +6,12 @@ then
 	exit 1
 fi
 
+if echo "$1" | grep > /dev/null '^-[0-9]\+$'
+then
+	n="`echo "$1" | cut -c2-`"
+	set -- "HEAD~$n"
+fi
+
 set -e
 
 VISUAL="$(dirname "$(readlink -f "$0")")"/git-rewrite-edit git rebase -i "$1"

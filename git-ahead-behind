@@ -6,7 +6,16 @@ then
 	exit 1
 fi
 
-git branch -v               | \
-	grep "$1"' [0-9]\+\]' | \
+git branch -v | \
 	sed 's/^. *//'            | \
-	sed 's/^\([^ ]*\).*'"$1"' \([0-9]*\)\].*/\1 \2/'
+  perl -e '
+my $type = shift;
+
+while(<STDIN>){
+	if(m@([^ ]+) +[0-9a-f]+ \[([^]]+)\]@){
+		my($branch,$where) = ($1, $2);
+		for(split /, */, $where){
+			print "$branch $1\n" if $_ =~ /^$type ([0-9]+)/;
+		}
+	}
+}' "$1"

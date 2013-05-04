@@ -1,7 +1,9 @@
 #!/bin/sh
 
+cfg=`git rev-parse --show-cdup`.git/config
+
 git branch          | \
 	sed 's/^\*\? *//' | \
 	while read b
-	do grep -FA2 "branch \"$b\"" .git/config > /dev/null || echo $b
+	do grep -FA2 "branch \"$b\"" "$cfg" > /dev/null || echo $b
 	done

@@ -1,11 +1,11 @@
 #!/bin/sh
 
-if [ $# -ne 0 ]
+if [ "$1" = --help ]
 then
-	echo "Usage: $0" >&2
+	echo "Usage: $0 [merge args...]" >&2
 	exit 1
 fi
 
 git-behind | while read b n
-do git co $b && git merge origin/$b || break
+do git co $b && git merge $@ origin/$b || break
 done

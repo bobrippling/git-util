@@ -7,5 +7,5 @@ then
 fi
 
 git-behind | while read b n
-do git co $b && git merge $@ origin/$b || break
+do git co $b && git merge --ff-only $@ origin/$b || break
 done

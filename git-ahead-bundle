@@ -8,14 +8,23 @@ fi
 
 tlog=/tmp/bundle.$$
 echo > $tlog
-trap "rm -f $tlog" EXIT
+
+cleanup(){
+	ec=$?
+	cat $tlog
+	rm -f $tlog
+	if [ $ec -ne 0 ]
+	then echo >&2 "bundle error"
+	fi
+	exit $ec
+}
+
+trap cleanup EXIT
 
 git-ahead | while read b n
 do
 	f="$(basename "$(pwd)").$(echo "$b" | tr / _)".bundle
 
-	git bundle create "$f" origin/"$b".."$b"
+	git bundle create "$f" origin/"$b".."$b" || exit $?
 	echo "wrote $f" >> $tlog
 done
-
-cat $tlog

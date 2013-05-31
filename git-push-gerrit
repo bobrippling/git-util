@@ -1,0 +1,23 @@
+#!/bin/sh
+
+dry=
+if [ "$1" = -n ]
+then
+	dry=echo
+	shift
+fi
+
+if [ $# -ne 3 ]
+then
+	echo >&2 "Usage: $0 [-n] remote refspec target-branch"
+	exit 1
+fi
+
+remote="$1"
+refsp="$2"
+target="$3"
+
+set -e
+
+$dry git push "$remote" "$refsp":refs/for/"$target"
+$dry git tag -f gerrit/last-pushed/"$target" "$refsp"

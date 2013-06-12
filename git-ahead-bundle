@@ -21,7 +21,7 @@ cleanup(){
 
 trap cleanup EXIT
 
-git-ahead | while read b n
+git-ahead | while read n b r
 do
 	f="$(basename "$(pwd)").$(echo "$b" | tr / _)".bundle
 

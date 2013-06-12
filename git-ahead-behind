@@ -1,21 +1,38 @@
 #!/bin/sh
 
-if [ $# -ne 1 ]
-then
-	echo "Usage: $0 [ahead|behind]" >&2
+usage(){
+	echo "Usage: $0 [repo]" >&2
 	exit 1
+}
+
+if [ $# -eq 1 ]
+then repo="$1"
+elif [ $# -ne 0 ]
+then usage
+else repo=origin
 fi
 
-git branch -v | \
-	sed 's/^. *//'            | \
-  perl -e '
-my $type = shift;
+revcnt(){
+	git rev-list "$1" | wc -l
+}
 
-while(<STDIN>){
-	if(m@([^ ]+) +[0-9a-f]+ \[([^]]+)\]@){
-		my($branch,$where) = ($1, $2);
-		for(split /, */, $where){
-			print "$branch $1\n" if $_ =~ /^$type ([0-9]+)/;
-		}
-	}
-}' "$1"
+show_ab(){
+	rvcnt=`revcnt "${2}..${3}" `
+	if [ $rvcnt != 0 ]
+	then echo "$1 $rvcnt $3 $4 "
+	fi
+}
+
+set -e
+
+git remote show "$repo" | \
+grep '\(rebases onto\|merges with\) remote' |\
+awk '{print $1 " " $NF}' | \
+while read local remote
+do
+	remote="$repo/$remote"
+	base=`git merge-base "$local" "$remote"`
+
+	show_ab ahead  "$base" "$local"  "$remote"
+	show_ab behind "$base" "$remote" "$remote"
+done

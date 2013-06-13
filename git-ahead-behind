@@ -25,9 +25,9 @@ show_ab(){
 
 set -e
 
-git remote show "$repo" | \
-grep '\(rebases onto\|merges with\) remote' |\
-awk '{print $1 " " $NF}' | \
+git config -l | \
+grep '^branch\.' | \
+sed -n 's%^branch\.%%; s%.merge=refs/heads/% %p' | \
 while read local remote
 do
 	remote="$repo/$remote"

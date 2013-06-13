@@ -6,6 +6,6 @@ then
 	exit 1
 fi
 
-git-behind | while read b n
+git-behind | while read n b r
 do git co $b && git merge --ff-only $@ origin/$b || break
 done

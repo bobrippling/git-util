@@ -19,7 +19,7 @@ revcnt(){
 show_ab(){
 	rvcnt=`revcnt "${2}..${3}" `
 	if [ $rvcnt != 0 ]
-	then echo "$1 $rvcnt $3 $4 "
+	then echo "$1 $rvcnt $4"
 	fi
 }
 
@@ -33,6 +33,6 @@ do
 	remote="$repo/$remote"
 	base=`git merge-base "$local" "$remote"`
 
-	show_ab ahead  "$base" "$local"  "$remote"
-	show_ab behind "$base" "$remote" "$remote"
+	show_ab ahead  "$base" "$local"  "$local $remote"
+	show_ab behind "$base" "$remote" "$local $remote"
 done

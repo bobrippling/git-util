@@ -3,8 +3,8 @@
 col_ahe='[1;34m'
 col_off='[m'
 
-git-ahead | while read branch ahead
+git-ahead | while read ahead branch remote
 	do
-		echo "$col_ahe$branch ahead $ahead$col_off"
+		echo "$col_ahe$branch ahead of $remote by $ahead$col_off"
 		git log --color=always -$ahead $branch $@
-	done | less -RF
+	done

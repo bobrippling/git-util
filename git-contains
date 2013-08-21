@@ -1,0 +1,55 @@
+#!/bin/sh
+
+die(){
+	echo "$@" >&2
+	exit 1
+}
+
+color_in='[32m'
+color_notin='[35m'
+color_off='[m'
+if [ "$1" = -C ]
+then
+	color_in=
+	color_notin=
+	color_off=
+fi
+
+if [ $# -ne 1 ]
+then
+	cat >&2 <<!
+Usage: $0 [-C] commit
+-C: no color
+!
+	exit 1
+fi
+
+
+commit=$(git rev-parse "$1")
+if [ $? -ne 0 ]
+then die "couldn't parse commit $1"
+fi
+
+
+git branch |
+sed 's/^\** *//' |
+while read b
+do
+	common=$(git merge-base "$b" "$commit")
+
+	r=$?
+	if [ $r -ne 0 ]
+	then die "git merge-base $b $commit returned $r"
+	fi
+
+	if [ "$common" = "$commit" ]
+	then
+		info=
+		printf "$color_in"
+	else
+		info='not '
+		printf "$color_notin"
+	fi
+
+	echo "${info}in $b$color_off"
+done

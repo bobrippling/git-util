@@ -1,0 +1,14 @@
+#!/bin/sh
+
+usage(){
+	echo "Usage: $0 mode [extra args...]" >&2
+	exit 1
+}
+
+if [ "$1" = --help ]
+then usage
+fi
+
+git-behind | while read n b r
+do git co "$b" && git $@ "$r" || break
+done

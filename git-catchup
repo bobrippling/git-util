@@ -1,11 +1,3 @@
 #!/bin/sh
 
-if [ "$1" = --help ]
-then
-	echo "Usage: $0 [merge args...]" >&2
-	exit 1
-fi
-
-git-behind | while read n b r
-do git co $b && git merge --ff-only $@ origin/$b || break
-done
+exec git-xup merge --ff-only $@

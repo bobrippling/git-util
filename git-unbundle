@@ -1,0 +1,35 @@
+#!/bin/sh
+
+usage(){
+	echo >&2 "Usage: $0 path/to/bundle [slash-cnt]"
+	exit 1
+}
+
+if [ $# -gt 2 ] || [ $# -lt 1 ]
+then usage
+fi
+
+set -e
+
+slashcnt=0
+if [ $# -eq 2 ]
+then slashcnt="$2"
+fi
+
+path="$1"
+branch="$(basename "$1" | sed 's/\.bundle$//; s/^[^.]\+\.//' | tr _ /)"
+
+if ! echo "$slashcnt" | grep '^[0-9]\+$' > /dev/null
+then usage
+fi
+
+while [ $slashcnt -gt 0 ]
+do
+	branch="$(echo "$branch" | sed 's%-%/%')"
+	slashcnt=$(($slashcnt - 1))
+done
+
+git fetch "$path" "$branch"
+git checkout "$branch"
+git merge --ff-only -n FETCH_HEAD
+rm "$path"

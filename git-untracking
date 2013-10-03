@@ -3,7 +3,7 @@
 cfg=`git rev-parse --show-cdup`.git/config
 
 git branch          | \
-	sed 's/^\*\? *//' | \
+	awk '{print $NF}' | \
 	while read b
 	do grep -FA2 "branch \"$b\"" "$cfg" > /dev/null || echo $b
 	done

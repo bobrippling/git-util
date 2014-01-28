@@ -19,12 +19,26 @@ cleanup(){
 	exit $ec
 }
 
+branch_to_bundle(){
+	echo "$(basename "$(pwd)").$(echo "$1" | tr / _)".bundle
+}
+
 trap cleanup EXIT
 
 git-ahead | while read n b r
 do
-	f="$(basename "$(pwd)").$(echo "$b" | tr / _)".bundle
+	f=$(branch_to_bundle "$b")
 
 	git bundle create "$f" origin/"$b".."$b" || exit $?
+	echo "wrote $f" >> $tlog
+done
+
+git-untracking | while read b
+do
+	f=$(branch_to_bundle "$b")
+
+	mbase=$(git merge-base master "$b")
+
+	git bundle create "$f" $mbase.."$b" || exit $?
 	echo "wrote $f" >> $tlog
 done

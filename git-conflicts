@@ -6,4 +6,4 @@ then
 	exit 1
 fi
 
-git status | grep -F 'both modified' | sed 's/^[^:]*: *//'
+git diff --name-only --diff-filter=U

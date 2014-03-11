@@ -1,0 +1,39 @@
+#!/bin/sh
+
+if [ $# -ne 0 ]
+then
+	echo "Usage: $0" >&2
+	exit 1
+fi
+
+g=$(git rev-parse --show-cdup)
+if [ -z "$g" ]
+then g=.
+fi
+
+if [ -d "$g/rebase-merge" ]
+then
+	if [ -f "$g/rebase-merge/interactive" ]
+	then r="rebase-i"
+	else r="rebase-m"
+	fi
+elif [ -d "$g/rebase-apply" ]
+then
+	if [ -f "$g/rebase-apply/rebasing" ]
+	then r="rebase"
+	elif [ -f "$g/rebase-apply/applying" ]
+	then r="am"
+	else r="am/rebase"
+	fi
+elif [ -f "$g/MERGE_HEAD" ]
+then r="merging"
+elif [ -f "$g/CHERRY_PICK_HEAD" ]
+then r="cherry-picking"
+elif [ -f "$g/REVERT_HEAD" ]
+then r="reverting"
+elif [ -f "$g/BISECT_LOG" ]
+then r="bisecting"
+else r="nothing"
+fi
+
+echo "$r"

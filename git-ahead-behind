@@ -13,7 +13,7 @@ else repo=origin
 fi
 
 revcnt(){
-	git rev-list "$1" | wc -l
+	git rev-list --count "$1"
 }
 
 show_ab(){

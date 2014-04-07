@@ -1,0 +1,27 @@
+#!/bin/sh
+
+usage(){
+	echo >&2 "Usage: $0 [log-args...] other-branch [current-branch]"
+	exit 1
+}
+
+args=
+while [ $# -gt 2 ]
+do
+	args="$args $1"
+	shift
+done
+
+if echo "$1" | grep '^-' >/dev/null
+then
+	args="$args $1"
+	shift
+fi
+
+other="$1"
+if [ $# -eq 1 ]
+then this="$(git current-branch)"
+else this="$2"
+fi
+
+git log $args "$(git merge-base "$this" "$other")..$other"

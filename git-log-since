@@ -24,4 +24,4 @@ then this="$(git current-branch)"
 else this="$2"
 fi
 
-git log $args "$(git merge-base "$this" "$other")..$other"
+git log $args "$(git merge-base "$this" "$other")..$this"

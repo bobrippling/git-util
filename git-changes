@@ -7,4 +7,4 @@ git-ahead | while read ahead branch remote
 	do
 		echo "$col_ahe$branch ahead of $remote by $ahead$col_off"
 		git log --color=always -$ahead $branch $@
-	done
+	done | less -R

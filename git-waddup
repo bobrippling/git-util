@@ -33,7 +33,12 @@ elif [ -f "$g/REVERT_HEAD" ]
 then r="reverting"
 elif [ -f "$g/BISECT_LOG" ]
 then r="bisecting"
-else r="nothing"
+else
+	ref=$(git symbolic-ref HEAD 2>/dev/null | sed 's;refs/heads/;;')
+	if [ -z "$ref" ]
+	then r="detached head"
+	else r="nothing"
+	fi
 fi
 
 echo "$r"

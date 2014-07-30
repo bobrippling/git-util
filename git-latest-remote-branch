@@ -1,0 +1,7 @@
+#!/bin/sh
+
+git branch -r | grep origin/ | while read b
+do
+	printf "%s" "$b"
+	git log -1 "$b" | grep '^Date' | sed 's/^Date: */ /'
+done | awk '{print $6, $3, $4, $5, $1}'

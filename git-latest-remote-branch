@@ -1,6 +1,6 @@
 #!/bin/sh
 
-git branch -r | grep origin/ | while read b
+git branch -r | grep origin/ | grep -v '\bHEAD\b' | while read b
 do
 	printf "%s" "$b"
 	git log -1 "$b" | grep '^Date' | sed 's/^Date: */ /'

@@ -18,6 +18,10 @@ then
 	shift
 fi
 
+if [ $# -eq 0 ]
+then usage
+fi
+
 other="$1"
 if [ $# -eq 1 ]
 then this="$(git current-branch)"

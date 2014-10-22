@@ -25,6 +25,8 @@ branch_to_bundle(){
 
 trap cleanup EXIT
 
+failed=0
+
 git-ahead | while read n b r
 do
 	f=$(branch_to_bundle "$b")
@@ -32,6 +34,9 @@ do
 	git bundle create "$f" origin/"$b".."$b" || exit $?
 	echo "wrote $f" >> $tlog
 done
+if [ $? -ne 0 ]
+then failed=1
+fi
 
 git-untracking | while read b
 do
@@ -42,3 +47,8 @@ do
 	git bundle create "$f" $mbase.."$b" || exit $?
 	echo "wrote $f" >> $tlog
 done
+if [ $? -ne 0 ]
+then failed=1
+fi
+
+exit $failed

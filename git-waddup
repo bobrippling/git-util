@@ -8,7 +8,7 @@ fi
 
 g=$(git rev-parse --show-cdup)
 if [ -z "$g" ]
-then g=.
+then g=.git
 fi
 
 if [ -d "$g/rebase-merge" ]

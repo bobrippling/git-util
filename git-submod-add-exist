@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ $# -ne 1 ]
+then
+	echo >&2 "Usage: $0 path-to-existing"
+	exit 1
+fi
+
+path="$@"
+
+set -e
+url=$(cd "$path"; git remote -v | head -1 | awk '{print $2}')
+
+git submodule add "$url" "$path"

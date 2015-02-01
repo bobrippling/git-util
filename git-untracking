@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cfg=`git rev-parse --show-cdup`.git/config
+cfg="`git rev-parse --git-dir`/config"
 
 git branch          | \
 	awk '{print $NF}' | \

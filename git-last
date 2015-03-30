@@ -1,0 +1,27 @@
+#!/bin/sh
+
+usage(){
+	echo >&2 "Usage: $0 [-N]"
+	echo >&2 " -N: number of checkouts to show"
+	exit 1
+}
+
+n=-5
+
+if [ $# -eq 1 ]
+then
+	n="$1"
+	if ! echo "$n" | grep '^-[0-9]\+$' >/dev/null
+	then usage
+	fi
+elif [ $# -ne 0 ]
+then usage
+fi
+
+headlog="$(git rev-parse --git-dir)"/logs/HEAD
+
+grep 'checkout: moving from .* to' "$headlog" \
+	| sed 's;.* to \([^ ]*\)$;\1;' \
+	| grep -v '^[0-9a-f]*$' \
+	| uniq \
+	| head $n

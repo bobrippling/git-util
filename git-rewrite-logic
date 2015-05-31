@@ -1,0 +1,35 @@
+#!/bin/sh
+
+local_auth="$(git config user.name) <$(git config user.email)>"
+
+commit_auth=$(git log -1 | grep "^Author" | cut -d" " -f2-)
+
+if [ "$local_auth" = "$commit_auth" ]
+then exit 0
+fi
+
+printf 'rewriting %s... ' "$AUTH"
+
+date=$(git log -1 | sed -n '/^Date:\s*/s///p')
+
+time=$(echo "$date" | sed 's;\(.*\) \([0-9]\+:[0-9][0-9]:[0-9][0-9]\) .*;\1 \2;' | sed 's;:; ;g')
+
+read day month datenum hr min sec <<!
+$time
+!
+
+export VISUAL=:
+commit_cmd='git commit --amend --reset-author'
+
+datearg=
+if [ $hr -lt 19 ]
+then
+	newhr=$(seq 19 23 | shuf | head -1)
+	datearg="--date=$day $month $datenum $newhr:$min:$sec"
+	printf 'and date (%s)...\n' "$datearg"
+
+	$commit_cmd "$datearg"
+else
+	$commit_cmd
+	printf '\n'
+fi

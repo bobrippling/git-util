@@ -5,8 +5,8 @@ t=/tmp/git_rewrite_$$
 
 trap "rm -f $t" EXIT
 
-AUTH="`git config user.name` <`git config user.email`>"
+LOGIC="$(dirname "$(readlink -f "$0")")"/git-rewrite-logic
 
-sed 's/^pick .*/&\nx AUTH=`git log -1 | grep "^Author" | cut -d" " -f2-`; if [ "$AUTH" != "'"$AUTH"'" ]; then echo "rewriting $AUTH"; git commit --amend --reset-author; fi/' "$f" > "$t"
+sed 's;^pick .*;&\nx'" $LOGIC;"  "$f" > "$t"
 
 mv "$t" "$f"

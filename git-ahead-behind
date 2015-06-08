@@ -16,7 +16,8 @@ revcnt(){
 show_ab(){
 	rvcnt=`revcnt "${2}..${3}" `
 	if [ $rvcnt != 0 ]
-	then echo "$1 $rvcnt $4"
+	then
+		printf '%s \e[36m%s \e[33m%s\e[m\n' "$1" "$rvcnt" "$4"
 	fi
 }
 
@@ -31,11 +32,11 @@ git branch \
 		if ! remote="$(
 			git rev-parse --abbrev-ref --symbolic-full-name "$local_upstream" 2>/dev/null)"
 		then
-			echo >&2 "$local has no upstream"
+			printf >&2 '\e[1;30m%s has no upstream\e[m\n' "$local"
 			continue
 		fi
 
 		base=`git merge-base "$local" "$remote"`
-		show_ab 'ahead'  "$base" "$local"  "$local $remote"
-		show_ab 'behind' "$base" "$remote" "$local $remote"
+		show_ab '[32mahead[m'  "$base" "$local"  "$local $remote"
+		show_ab '[31mbehind[m' "$base" "$remote" "$local $remote"
 	done

@@ -1,15 +1,12 @@
 #!/bin/sh
 
 usage(){
-	echo "Usage: $0 [repo]" >&2
+	echo "Usage: $0" >&2
 	exit 1
 }
 
-if [ $# -eq 1 ]
-then repo="$1"
-elif [ $# -ne 0 ]
+if [ $# -ne 0 ]
 then usage
-else repo=origin
 fi
 
 revcnt(){
@@ -25,14 +22,20 @@ show_ab(){
 
 set -e
 
-git config -l | \
-grep '^branch\.' | \
-sed -n 's%^branch\.%%; s%.merge=refs/heads/% %p' | \
-while read local remote
-do
-	remote="$repo/$remote"
-	base=`git merge-base "$local" "$remote"`
+git branch \
+	| sed 's;^\** *;;' \
+	| while read local
+	do
+		local_upstream="$local@{u}"
 
-	show_ab ahead  "$base" "$local"  "$local $remote"
-	show_ab behind "$base" "$remote" "$local $remote"
-done
+		if ! remote="$(
+			git rev-parse --abbrev-ref --symbolic-full-name "$local_upstream" 2>/dev/null)"
+		then
+			echo >&2 "$local has no upstream"
+			continue
+		fi
+
+		base=`git merge-base "$local" "$remote"`
+		show_ab 'ahead'  "$base" "$local"  "$local $remote"
+		show_ab 'behind' "$base" "$remote" "$local $remote"
+	done

@@ -31,7 +31,7 @@ git-ahead | while read n b r
 do
 	f=$(branch_to_bundle "$b")
 
-	git bundle create "$f" origin/"$b".."$b" || exit $?
+	git bundle create "$f" "$b@{u}".."$b" || exit $?
 	echo "wrote $f" >> $tlog
 done
 if [ $? -ne 0 ]

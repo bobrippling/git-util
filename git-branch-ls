@@ -3,4 +3,4 @@
 set -e
 [ $# -eq 0 ]
 
-git branch | sed 's/^\*//; s/^ *//; /^(no branch)$/d'
+git branch | grep -v '^(no branch)$' | cut -c3-

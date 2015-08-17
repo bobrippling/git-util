@@ -24,4 +24,4 @@ grep 'checkout: moving from .* to' "$headlog" \
 	| sed 's;.* to \([^ ]*\)$;\1;' \
 	| grep -v '^[0-9a-f]*$' \
 	| uniq \
-	| head $n
+	| tail $n

@@ -1,7 +1,9 @@
 #!/bin/sh
 
-git branch -r | grep origin/ | grep -v '\bHEAD\b' | while read b
+git branch -r \
+	| awk '{print $1}' \
+	| while read b
 do
-	printf "%s" "$b"
-	git log -1 "$b" | grep '^Date' | sed 's/^Date: */ /'
-done | awk '{print $6, $3, $4, $5, $1}'
+	git log -1 '--pretty=format:%at %h' "$b"
+	printf ' %s\n' "$b"
+done | sort -n

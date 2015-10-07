@@ -5,12 +5,14 @@ usage(){
 	echo >&2 "  -n specified once will echo the git push and tag commands"
 	echo >&2 "  -n specified twice will pass the dry run through to git-push"
 	echo >&2 "  -d: push to refs/drafts"
+	echo >&2 "  -r: call gerrit set-reviewers with the count and names"
 	exit 1
 }
 
 pushtype=publish
 dry=
 flags=
+reviewers=
 
 for arg
 do
@@ -27,6 +29,9 @@ do
 	then
 		pushtype=drafts
 		shift
+	elif echo "$arg" | grep '^-r=' >/dev/null
+	then
+		reviewers="$(echo "$arg" | sed 's/^-r=//')"
 	else
 		break
 	fi
@@ -45,4 +50,15 @@ set -e
 $dry git push $flags "$remote" "$refsp":refs/$pushtype/"$target"
 if [ -z "$flags" ]
 then $dry git tag -f gerrit/last-pushed/"$target" "$refsp"
+fi
+
+if [ -n "$reviewers" ]
+then
+	review_n="$(echo "$reviewers" | sed 's/^\([^,]*\),.*/\1/')"
+	review_arg="$(echo "$reviewers" \
+		| sed 's/^[^,]*,//' \
+		| tr ',' '\n' \
+		| sed 's/^/-a /')"
+
+	$dry gerrit set-reviewers $review_arg -- $(git rev-list -"$review_n" "$refsp")
 fi

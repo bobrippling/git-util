@@ -1,35 +1,41 @@
 #!/bin/sh
 
+usage(){
+	echo >&2 "Usage: $0 [-n] [-n] [-d] [-r=N,a,b,c] remote refspec target-branch"
+	echo >&2 "  -n specified once will echo the git push and tag commands"
+	echo >&2 "  -n specified twice will pass the dry run through to git-push"
+	echo >&2 "  -d: push to refs/drafts"
+	exit 1
+}
+
 pushtype=publish
 dry=
 flags=
-if [ "$1" = -n ]
-then
-	dry=echo
-	shift
-fi
-if [ "$1" = -n ]
-then
-	dry=
-	flags=-n
-	shift
-fi
 
-if [ "$1" = -d ]
-then
-	pushtype=drafts
+for arg
+do
+	if [ "$arg" = -n ]
+	then
+		if [ "$dry" = echo ]
+		then
+			dry=
+			flags=-n
+		else
+			dry=echo
+		fi
+	elif [ "$arg" = -d ]
+	then
+		pushtype=drafts
+		shift
+	else
+		break
+	fi
 	shift
-fi
+done
 
 if [ $# -ne 3 ]
-then
-	echo >&2 "Usage: $0 [-n] [-n] [-d] remote refspec target-branch"
-	echo >&2 "-n specified once will echo the git push and tag commands"
-	echo >&2 "-n specified twice will pass the dry run through to git-push"
-	echo >&2 "-d: push to refs/drafts"
-	exit 1
+then usage
 fi
-
 remote="$1"
 refsp="$2"
 target="$3"

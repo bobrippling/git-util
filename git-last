@@ -19,9 +19,19 @@ then usage
 fi
 
 headlog="$(git rev-parse --git-dir)"/logs/HEAD
+n=$(echo "$n" | sed 's/^-//')
 
 grep 'checkout: moving from .* to' "$headlog" \
 	| sed 's;.* to \([^ ]*\)$;\1;' \
 	| grep -v '^[0-9a-f]*$' \
-	| uniq \
-	| tail $n
+	| perl -e '
+my $max = shift;
+my %entries;
+
+while(<>){
+	$entries{$_} = 1;
+	last if $max == scalar keys %entries;
+}
+
+print keys %entries;
+' $n

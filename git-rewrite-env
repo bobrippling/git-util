@@ -1,0 +1,40 @@
+#!/bin/sh
+
+usage(){
+	echo >&2 "Usage: $0 [-f] -N..."
+	exit 1
+}
+
+set -e
+
+src="$(dirname "$(readlink -f "$0")")"
+
+extra_args=
+if test "$1" = -f
+then
+	extra_args=-f
+	shift
+fi
+
+if [ $# -ne 1 ]
+then usage
+fi
+
+if ! echo "$1" | grep > /dev/null '^-[0-9]\+$'
+then usage
+fi
+
+n="`echo "$1" | cut -c2-`"
+set -- "HEAD~$n"
+
+rewrite_env_branch="$(git current-branch)"
+if test "$rewrite_env_branch" = HEAD
+then
+	echo >&2 "$0: not on a branch"
+	exit 1
+fi
+
+git filter-branch \
+	$extra_args \
+	--env-filter ". $src/git-rewrite-env-logic" \
+	"$1..$rewrite_env_branch"

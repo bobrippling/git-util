@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -e
+
+verbose=no
+
+read epoch offset <<!
+$GIT_AUTHOR_DATE
+!
+old=$GIT_AUTHOR_DATE
+
+when=$(date -d "$epoch" | tr : ' ')
+
+read day datenum month hr min sec zone year <<!
+$when
+!
+
+if test $hr -lt 19
+then
+	newhr=$(seq 19 23 | shuf | head -1)
+
+	newdate="$day, $datenum $month $year $newhr:$min:$sec $zone"
+
+	GIT_AUTHOR_DATE="@$(date -d "$newdate" +%s) $offset"
+
+	if test $verbose = yes
+	then
+		echo "$when -> $newdate"
+		echo "$old -> $GIT_AUTHOR_DATE"
+	fi
+fi
+
+expected_email="$(git config user.email)"
+GIT_AUTHOR_EMAIL="$expected_email"
+
+export GIT_AUTHOR_DATE
+export GIT_AUTHOR_EMAIL

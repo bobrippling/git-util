@@ -11,6 +11,10 @@ if [ -z "$g" ]
 then g=.git
 fi
 
+if ! [ -d "$g" ]
+then g=$(cut -d' ' -f2- < "$g")
+fi
+
 if [ -d "$g/rebase-merge" ]
 then
 	if [ -f "$g/rebase-merge/interactive" ]

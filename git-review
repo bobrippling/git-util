@@ -1,0 +1,34 @@
+#!/bin/sh
+
+usage(){
+	echo >&2 "Usage: $0 [git rev-list arguments]"
+	exit 1
+}
+
+if test $# -eq 0
+then usage
+fi
+
+tty=$(tty)
+
+if test -z "$tty"
+then
+	echo >&2 "$0: no tty"
+	exit 1
+fi
+
+git rev-list "$@" \
+	| perl -e 'print reverse <>' \
+	| while read commit
+do
+	export GIT_REVIEW_HASH="$commit"
+	export HASH="$commit"
+
+	git show "$commit"
+	printf 'review mark: '
+	read mark < "$tty" || continue
+
+	if test -n "$mark"
+	then gerrit review --code-review "$mark" -- "$commit"
+	fi
+done

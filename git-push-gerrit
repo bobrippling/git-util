@@ -47,7 +47,12 @@ target="$3"
 
 set -e
 
-$dry git push $flags "$remote" "$refsp":refs/$pushtype/"$target"
+if ! $dry git push $flags "$remote" "$refsp":refs/$pushtype/"$target"
+then
+	printf >&2 '\e[1;35mFAILURE!!!!!!!!!!!!!!!!!!!\e[m\n'
+	exit 1
+fi
+
 if [ -z "$flags" ]
 then $dry git tag -f gerrit/last-pushed/"$target" "$refsp"
 fi

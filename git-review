@@ -26,9 +26,13 @@ do
 
 	git show "$commit"
 	printf 'review mark: '
-	read mark < "$tty" || continue
+	read mark rest < "$tty" || continue
 
 	if test -n "$mark"
-	then gerrit review --code-review "$mark" -- "$commit"
+	then
+		if test -n "$rest"
+		then gerrit review --code-review "$mark" --message "$rest" -- "$commit"
+		else gerrit review --code-review "$mark"                   -- "$commit"
+		fi
 	fi
 done

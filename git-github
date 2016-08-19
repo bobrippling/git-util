@@ -1,0 +1,61 @@
+#!/bin/sh
+
+usage(){
+	echo >&2 "Usage: $0 command..."
+	echo >&2 "Commands:"
+	echo >&2 " open [remote]"
+	exit 1
+}
+
+default_remote(){
+	git remote -v | cut -f1 | head -1
+}
+
+github_open(){
+	dry=
+	case $# in
+		0)
+			remote=$(default_remote)
+			;;
+		1)
+			if test "$1" = -n
+			then dry=echo
+			else remote="$1"
+			fi
+			;;
+		2)
+			if test "$1" != -n
+			then usage
+			fi
+			dry=echo
+			remote="$2"
+			;;
+		*)
+			usage
+	esac
+
+	url=$(
+	git remote -v \
+		| grep "^$remote\t.* (fetch)$" \
+		| head -1 \
+		| awk '{print $2}' \
+		| sed 's/\([a-zA-Z0-9]\):\([a-zA-Z0-9]\)/\1\/\2/; s;ssh://;https://;; s;[a-zA-Z0-9]*@;;;'
+	)
+
+	if ! echo "$url" | grep '^[a-z]*://' >/dev/null
+	then url="https://$url"
+	fi
+
+	$dry open "$url"
+}
+
+
+case "$1" in
+	open)
+		shift
+		github_open "$@"
+		;;
+	*)
+		usage
+		;;
+esac

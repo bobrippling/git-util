@@ -16,6 +16,6 @@ fi
 git branch -r   \
 	| grep "$r"/  \
 	| sed /HEAD/d \
-	| xargs git log '--pretty=format:%an %ae' \
+	| xargs git log '--pretty=format:%an %ae%n%cn %ce' \
 	| sort        \
 	| uniq

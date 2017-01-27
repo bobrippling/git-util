@@ -49,7 +49,7 @@ set -e
 
 if ! $dry git push $flags "$remote" "$refsp":refs/$pushtype/"$target"
 then
-	printf >&2 '\e[1;35mFAILURE!!!!!!!!!!!!!!!!!!!\e[m\n'
+	printf >&2 '\e[1;31mFAILURE!!!!!!!!!!!!!!!!!!!\e[m\n'
 	exit 1
 fi
 

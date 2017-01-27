@@ -1,3 +1,0 @@
-#!/bin/sh
-
-git-ahead-behind $@ | sed -n 's/^ahead *//p'

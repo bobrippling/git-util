@@ -7,7 +7,22 @@ col_ahead='[32m'
 col_behind='[31m'
 col_off='[m'
 
-if ! [ -t 1 ]
+if [ -t 1 ]
+then color=1
+else color=0
+fi
+
+for arg
+do
+	if test "$arg" = -c
+	then
+		color=1
+	else
+		usage
+	fi
+done
+
+if test $color = 0
 then
 	col_count=
 	col_branch=
@@ -22,20 +37,12 @@ usage(){
 	exit 1
 }
 
-if [ $# -ne 0 ]
-then usage
-fi
-
 revcnt(){
 	git rev-list --count "$1"
 }
 
-show_ab(){
-	rvcnt=`revcnt "${2}..${3}" `
-	if [ $rvcnt != 0 ]
-	then
-		printf '%s %s%s %s%s%s\n' "$1" "$col_count" "$rvcnt" "$col_branch" "$4" "$col_off"
-	fi
+out(){
+	printf '%s' "$*"
 }
 
 set -e
@@ -47,13 +54,29 @@ git branch \
 		local_upstream="$local@{u}"
 
 		if ! remote="$(
-			git rev-parse --abbrev-ref --symbolic-full-name "$local_upstream" 2>/dev/null)"
+			git rev-parse --abbrev-ref --symbolic-full-name "$local_upstream" 2>/dev/null
+		)"
 		then
 			printf >&2 '%s%s has no upstream%s\n' "$col_err" "$local" "$col_off"
 			continue
 		fi
 
-		base=`git merge-base "$local" "$remote"`
-		show_ab "${col_ahead}ahead$col_off"  "$base" "$local"  "$local $remote"
-		show_ab "${col_behind}behind$col_off" "$base" "$remote" "$local $remote"
+		if base=`git merge-base "$local" "$remote"`
+		then
+			ahead_count=`revcnt "$base".."$local"`
+			behind_count=`revcnt "$base".."$remote"`
+
+			out "${col_branch}$local $remote "
+
+			if test $ahead_count -gt 0
+			then out "${col_ahead}ahead ${col_count}$ahead_count "
+			fi
+			if test $behind_count -gt 0
+			then out "${col_behind}behind ${col_count}$behind_count "
+			fi
+
+			echo "$col_off"
+		else
+			printf >&2 '%s%s has nothing in common with %s%s\n' "$col_err" "$local" "$remote" "$col_off"
+		fi
 	done

@@ -1,8 +1,11 @@
 #!/bin/sh
 
 usage(){
-	echo >&2 "Usage: $0 [-f] -N..."
-	exit 1
+	echo >&2 "Usage: $0 [-f] <rev-list-args>"
+	echo >&2 "  e.g."
+	echo >&2 "  $0 HEAD~10.."
+	echo >&2 "  $0 HEAD~5..master"
+	exit 2
 }
 
 set -e
@@ -20,13 +23,6 @@ if [ $# -ne 1 ]
 then usage
 fi
 
-if ! echo "$1" | grep > /dev/null '^-[0-9]\+$'
-then usage
-fi
-
-n="`echo "$1" | cut -c2-`"
-set -- "HEAD~$n"
-
 rewrite_env_branch="$(git current-branch)"
 if test "$rewrite_env_branch" = HEAD
 then
@@ -34,7 +30,19 @@ then
 	exit 1
 fi
 
+branch=$(echo "$1" | sed -n '/.*\.\.\(.*\)/s//\1/p')
+if test -z "$branch"
+then branch="$rewrite_env_branch"
+fi
+
+branch_path="$(git rev-parse --show-cdup).git/refs/heads/$branch"
+if ! test -e "$branch_path"
+then
+	echo >&2 "$branch doesn't exist ($branch_path)"
+	exit 1
+fi
+
 git filter-branch \
 	$extra_args \
 	--env-filter ". $src/git-rewrite-env-logic" \
-	"$1..$rewrite_env_branch"
+	"$1"

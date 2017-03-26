@@ -15,7 +15,7 @@ read day datenum month hr min sec zone year <<!
 $when
 !
 
-if test $hr -lt 19
+if test $hr -lt 19 && test $day != Sun && test $day != Sat
 then
 	newhr=$(seq 19 23 | shuf | head -1)
 

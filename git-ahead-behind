@@ -1,5 +1,10 @@
 #!/bin/sh
 
+usage(){
+	echo "Usage: $0" >&2
+	exit 1
+}
+
 col_count='[36m'
 col_branch='[33m'
 col_err='[1;30m'
@@ -31,11 +36,6 @@ then
 	col_behind=
 	col_off=
 fi
-
-usage(){
-	echo "Usage: $0" >&2
-	exit 1
-}
 
 revcnt(){
 	git rev-list --count "$1"

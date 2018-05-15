@@ -1,6 +1,21 @@
 #!/bin/sh
 
-set -e
-[ $# -eq 0 ]
+usage(){
+    echo >&2 "Usage: $0 [-a]"
+    exit 2
+}
 
-git branch | cut -c3- | grep -v '^(no branch'
+if test $# -eq 0
+then
+    extra="sed /^_/d"
+elif test $# -gt 1
+then
+    usage
+elif test "$1" = -a
+then
+    extra=cat
+else
+    usage
+fi
+
+git branch | cut -c3- | grep -v '^(no branch' | $extra

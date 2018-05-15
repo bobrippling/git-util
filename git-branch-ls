@@ -3,4 +3,4 @@
 set -e
 [ $# -eq 0 ]
 
-git branch | grep -v '^(no branch)$' | cut -c3-
+git branch | cut -c3- | grep -v '^(no branch'

@@ -2,8 +2,6 @@
 
 set -e
 
-verbose=no
-
 read epoch offset <<!
 $GIT_AUTHOR_DATE
 !
@@ -45,7 +43,7 @@ then
 		GIT_AUTHOR_DATE="@$(date -d "$newdate" +%s) $offset"
 	fi
 
-	if test $verbose = yes
+	if test -n "$GIT_REWRITE_ENV_VERBOSE"
 	then
 		echo "$when -> $newdate"
 		echo "$old -> $GIT_AUTHOR_DATE"

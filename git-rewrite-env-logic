@@ -52,10 +52,10 @@ then
 	fi
 fi
 
-expected_email="$(git config user.email)"
+expected_email="robpilling@gmail.com"
 GIT_AUTHOR_EMAIL="$expected_email"
 
-GIT_AUTHOR_NAME="$(git config user.name)"
+GIT_AUTHOR_NAME="Rob Pilling"
 
 export GIT_AUTHOR_DATE
 export GIT_AUTHOR_EMAIL

@@ -10,7 +10,10 @@ usage(){
 
 set -e
 
-src="$(dirname "$(readlink -f "$0")")"
+if test "$(uname)" = Darwin
+then src="$(dirname "$0")"
+else src="$(dirname "$(readlink -f "$0")")"
+fi
 
 extra_args=
 if test "$1" = -f

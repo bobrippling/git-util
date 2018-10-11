@@ -9,11 +9,18 @@ $GIT_AUTHOR_DATE
 !
 old=$GIT_AUTHOR_DATE
 
-when=$(date -d "$epoch" | tr : ' ')
-
-read day datenum month hr min sec zone year <<!
-$when
-!
+if test "$(uname)" = Darwin
+then
+	when=$(date -jf %s "$(echo "$epoch" | sed 's/^@//')" | tr : ' ')
+	read day datenum month year hr min sec zone <<-!
+	$when
+	!
+else
+	when=$(date -d "$epoch" | tr : ' ')
+	read day datenum month hr min sec zone year <<-!
+	$when
+	!
+fi
 
 if test $hr -lt 19 && test $day != Sun && test $day != Sat
 then
@@ -29,9 +36,14 @@ then
 
 	newhr=$(seq 19 23 | shuf | head -1)
 
-	newdate="$day, $datenum $month $year $newhr:$min:$sec $zone"
-
-	GIT_AUTHOR_DATE="@$(date -d "$newdate" +%s) $offset"
+	if test "$(uname)" = Darwin
+	then
+		newdate="$year/$month/$datenum $newhr:$min:$sec $zone"
+		GIT_AUTHOR_DATE="@$(date -jf '%Y/%b/%d %H:%M:%S %Z' "$newdate" +%s) $offset"
+	else
+		newdate="$day $datenum $month $year $newhr:$min:$sec $zone"
+		GIT_AUTHOR_DATE="@$(date -d "$newdate" +%s) $offset"
+	fi
 
 	if test $verbose = yes
 	then

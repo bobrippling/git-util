@@ -17,6 +17,16 @@ $when
 
 if test $hr -lt 19 && test $day != Sun && test $day != Sat
 then
+	if ! which shuf >/dev/null
+	then
+		shuf(){
+			perl -e '
+				use List::Util qw(shuffle);
+				print shuffle <>;
+			'
+		}
+	fi
+
 	newhr=$(seq 19 23 | shuf | head -1)
 
 	newdate="$day, $datenum $month $year $newhr:$min:$sec $zone"

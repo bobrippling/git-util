@@ -1,0 +1,25 @@
+#!/bin/sh
+
+usage(){
+	echo >&2 "Usage: $0 name e@mail.com yyyy-mm-ddThh:mm:ss"
+	exit 2
+}
+
+if test $# -lt 3
+then usage
+fi
+
+export GIT_COMMITTER_NAME="$1"
+export GIT_COMMITTER_EMAIL="$2"
+export GIT_COMMITTER_DATE="$3"
+
+export GIT_AUTHOR_NAME="$1"
+export GIT_AUTHOR_EMAIL="$2"
+export GIT_AUTHOR_DATE="$3"
+
+shift 3
+
+git commit \
+	--date="$GIT_COMMITTER_DATE" \
+	--author="$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" \
+	"$@"

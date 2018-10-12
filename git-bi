@@ -1,0 +1,5 @@
+#!/bin/sh
+
+actual="$(git rev-parse --show-cdup)"
+cd "$actual"
+git bisect "$@"

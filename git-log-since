@@ -1,31 +1,31 @@
-#!/bin/sh
+#!/usr/bin/perl
 
-usage(){
-	echo >&2 "Usage: $0 [log-args...] other-branch [current-branch]"
-	exit 1
+sub usage {
+    warn "Usage: $0 [--head=...] [git-log-arguments] rev\n";
+    exit 2;
 }
 
-args=
-while [ $# -gt 2 ]
-do
-	args="$args $1"
-	shift
-done
+if(@ARGV == 0){
+    usage();
+}
 
-if echo "$1" | grep '^-' >/dev/null
-then
-	args="$args $1"
-	shift
-fi
+my $head = "HEAD";
+my @args;
+for(@ARGV){
+	if(/^--head=(.*)/){
+		$head = $1;
+		if(length $head == 0){
+			print STDERR "--head argument is empty\n";
+			usage();
+		}
+	}else{
+		push @args, $_;
+	}
+}
 
-if [ $# -eq 0 ]
-then usage
-fi
+my $rev = pop @args;
 
-other="$1"
-if [ $# -eq 1 ]
-then this="$(git current-branch)"
-else this="$2"
-fi
+chomp(my $mergebase = `git merge-base $rev $head`);
+exit 1 unless length $mergebase;
 
-git log $args "$(git merge-base "$this" "$other")..$this"
+exit(system('git', 'log', @args, "$mergebase..$head"));

@@ -1,0 +1,30 @@
+#!/bin/sh
+
+a=
+b=
+case $# in
+    1)
+        a=HEAD
+        b="$1"
+        ;;
+    2)
+        a="$1"
+        b="$2"
+        ;;
+    *)
+        echo >&2 "Usage: $0 rev-1 [rev-2]"
+        echo >&2 "  rev-2 defaults to HEAD"
+        exit 2
+esac
+
+set -e
+
+base=$(git merge-base "$a" "$b")
+
+if git merge-tree "$base" "$a" "$b" 2>&1 | grep '^+[<>=]' >/dev/null
+then
+	echo "merging $a and $b will conflict" >&2
+	exit 1
+else
+	exit 0
+fi

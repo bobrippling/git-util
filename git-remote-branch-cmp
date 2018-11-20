@@ -1,0 +1,35 @@
+#!/bin/sh
+
+if test $# -ne 2
+then
+	echo >&2 "Usage: $0 first-remote second-remote"
+	exit 2
+fi
+
+first="$1"
+second="$2"
+
+git branch -a \
+	| grep "remotes/$first" \
+	| sed /HEAD/d \
+	| cut '-d ' -f3- \
+	| while read b_first
+do
+	ci_first=$(git rev-parse "$b_first")
+
+	b_second=$(echo "$b_first" | sed "s/$first/$second/")
+	if ! ci_second=$(git rev-parse "$b_second" 2>&1)
+	then
+		if ! echo "$ci_second" | grep ambiguous >/dev/null
+		then
+			echo "couldn't find $b_second ($(echo $ci_second | head -1))" >&2
+		else
+			echo "$b_first":refs/heads/$(echo "$b_second" | sed 's;remotes/[^/]*/;;')
+		fi
+		continue
+	fi
+
+	if test $ci_first != $ci_second
+	then printf '%s and %s differ\n' "$b_first" "$b_second"
+	fi
+done

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if test $# -ne 2
 then
@@ -9,27 +9,13 @@ fi
 first="$1"
 second="$2"
 
-git branch -a \
-	| grep "remotes/$first" \
-	| sed /HEAD/d \
-	| cut '-d ' -f3- \
-	| while read b_first
-do
-	ci_first=$(git rev-parse "$b_first")
+remote_branch_hashes(){
+	git branch -a \
+		| grep "remotes/$1" \
+		| sed /HEAD/d \
+		| cut '-d ' -f3- \
+		| xargs -I{} sh -c 'printf "%s " {}; git rev-parse {} 2>/dev/null' \
+		| sed 's;^remotes/[^/]*/;;'
+}
 
-	b_second=$(echo "$b_first" | sed "s/$first/$second/")
-	if ! ci_second=$(git rev-parse "$b_second" 2>&1)
-	then
-		if ! echo "$ci_second" | grep ambiguous >/dev/null
-		then
-			echo "couldn't find $b_second ($(echo $ci_second | head -1))" >&2
-		else
-			echo "$b_first":refs/heads/$(echo "$b_second" | sed 's;remotes/[^/]*/;;')
-		fi
-		continue
-	fi
-
-	if test $ci_first != $ci_second
-	then printf '%s and %s differ\n' "$b_first" "$b_second"
-	fi
-done
+diff -u <(remote_branch_hashes $first) <(remote_branch_hashes $second)

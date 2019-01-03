@@ -18,4 +18,4 @@ remote_branch_hashes(){
 		| sed 's;^remotes/[^/]*/;;'
 }
 
-diff -u <(remote_branch_hashes $first) <(remote_branch_hashes $second)
+diff -U0 <(remote_branch_hashes $first) <(remote_branch_hashes $second)

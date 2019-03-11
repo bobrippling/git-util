@@ -24,18 +24,5 @@ n=$(echo "$n" | sed 's/^-//')
 grep 'checkout: moving from .* to' "$headlog" \
 	| sed 's;.*> \([0-9]*\) [+-][0-9]*.* to \([^ ]*\)$;\1 \2;' \
 	| grep -v ' [0-9a-f]*$' \
-	| perl -e '
-my $max = shift;
-my %entries;
-
-while(<>){
-	chomp;
-	$entries{$_} = 1;
-}
-
-for(sort { $a <=> $b } keys %entries){
-	last if($max-- == 0);
-	/^[0-9]+ (.*)$/;
-	print "$1\n";
-}
-' $n
+	| sort -n \
+	| tail -$n

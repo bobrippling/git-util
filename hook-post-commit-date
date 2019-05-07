@@ -1,0 +1,55 @@
+#!/bin/sh
+
+set -e
+
+debug(){
+	echo "$*" >&2
+}
+
+show_commit_time(){
+	date -jf %s "$(git log -1 --format='%at' "$@")" +'%Y %m %d %H %M %S %z'
+}
+
+if test -n "$POST_HOOK_ACTIVE"
+then
+	debug "skipping post-commit - hook already running"
+	exit 0
+fi
+
+read year month day hour minute second tz <<-!
+$(show_commit_time HEAD)
+!
+
+read prior_year prior_month prior_day prior_hour prior_minute prior_second prior_tz <<-!
+$(show_commit_time 'HEAD^')
+!
+
+if test $year != $prior_year || test $month != $prior_month || test $day != $prior_day
+then
+	#hour=$(echo 18 $(echo $tz | sed 's/00$//') | bc)
+	hour=18
+	debug "no prior commit, only changing hour to $hour" >&2
+else
+	debug "previous commit was today, committing to after it ($prior_hour:$prior_minute:$prior_second $prior_tz)"
+	if test $hour -lt $prior_hour
+	then
+		hour=$prior_hour
+		debug "changing hour to be $hour"
+	fi
+	if test $hour -eq $prior_hour && test $minute -lt $prior_minute
+	then
+		hour=$(expr $hour + 1)
+		debug "minute is before, incrementing hour to $hour"
+	fi
+	if test $hour -eq $prior_hour && test $minute -eq $prior_minute && test $second -lt $prior_second
+	then
+		minute=$(expr $minute + 1)
+		debug "minute is the same, second is before, incrementing minute to $minute"
+	fi
+fi
+
+export GIT_COMMITTER_DATE="$year-$month-${day}T$hour:$minute:$second$tz"
+export GIT_AUTHOR_DATE="$GIT_COMMITTER_DATE"
+export POST_HOOK_ACTIVE=1
+echo "amending commit date to $GIT_COMMITTER_DATE"
+git commit --amend --no-e --reset-author --allow-empty

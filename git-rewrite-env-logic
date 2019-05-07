@@ -1,0 +1,64 @@
+#!/bin/sh
+
+set -e
+
+read epoch offset <<!
+$GIT_AUTHOR_DATE
+!
+old=$GIT_AUTHOR_DATE
+
+if test "$(uname)" = Darwin
+then
+	when=$(date -jf %s "$(echo "$epoch" | sed 's/^@//')" | tr : ' ')
+	read day datenum month year hr min sec zone <<-!
+	$when
+	!
+else
+	when=$(date -d "$epoch" | tr : ' ')
+	read day datenum month hr min sec zone year <<-!
+	$when
+	!
+fi
+
+if test $hr -lt 19 && test $day != Sun && test $day != Sat
+then
+	if ! which shuf >/dev/null
+	then
+		shuf(){
+			perl -e '
+				use List::Util qw(shuffle);
+				print shuffle <>;
+			'
+		}
+	fi
+
+	newhr=$(seq 19 23 | shuf | head -1)
+
+	if test "$(uname)" = Darwin
+	then
+		newdate="$year/$month/$datenum $newhr:$min:$sec $zone"
+		GIT_AUTHOR_DATE="@$(date -jf '%Y/%b/%d %H:%M:%S %Z' "$newdate" +%s) $offset"
+	else
+		newdate="$day $datenum $month $year $newhr:$min:$sec $zone"
+		GIT_AUTHOR_DATE="@$(date -d "$newdate" +%s) $offset"
+	fi
+
+	if test -n "$GIT_REWRITE_ENV_VERBOSE"
+	then
+		echo "$when -> $newdate"
+		echo "$old -> $GIT_AUTHOR_DATE"
+	fi
+fi
+
+expected_email="robpilling@gmail.com"
+GIT_AUTHOR_EMAIL="$expected_email"
+
+GIT_AUTHOR_NAME="Rob Pilling"
+
+export GIT_AUTHOR_DATE
+export GIT_AUTHOR_EMAIL
+export GIT_AUTHOR_NAME
+
+export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"

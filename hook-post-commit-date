@@ -20,6 +20,10 @@ read year month day hour minute second tz <<-!
 $(show_commit_time HEAD)
 !
 
+if test $hour -ge 18 || test $day == Sun || test $day == Sat
+then exit 0
+fi
+
 read prior_year prior_month prior_day prior_hour prior_minute prior_second prior_tz <<-!
 $(show_commit_time 'HEAD^')
 !

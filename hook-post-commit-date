@@ -7,7 +7,7 @@ debug(){
 }
 
 show_commit_time(){
-	date -jf %s "$(git log -1 --format='%at' "$@")" +'%Y %m %d %H %M %S %z'
+	date -jf %s "$(git log -1 --format='%at' "$@")" +'%Y %m %d %H %M %S %z %a'
 }
 
 if test -n "$POST_HOOK_ACTIVE"
@@ -16,11 +16,11 @@ then
 	exit 0
 fi
 
-read year month day hour minute second tz <<-!
+read year month day hour minute second tz day_name <<-!
 $(show_commit_time HEAD)
 !
 
-if test $hour -ge 18 || test $day == Sun || test $day == Sat
+if test $hour -ge 18 || test $day_name == Sun || test $day_name == Sat
 then exit 0
 fi
 

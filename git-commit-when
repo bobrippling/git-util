@@ -29,5 +29,5 @@ else export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
 fi
 
 git commit \
-	--date="$GIT_COMMITTER_DATE" \
+	--date="$GIT_AUTHOR_DATE" \
 	"$@"

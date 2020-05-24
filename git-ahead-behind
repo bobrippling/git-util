@@ -52,13 +52,18 @@ set -e
 git branch \
 	| while read maybe_star local
 	do
-		if test "$maybe_star" = '*'
-		then
-			star='*'
-		else
-			star=''
-			local="$maybe_star"
-		fi
+		case "$maybe_star" in
+			'*')
+				star='*'
+				;;
+			'+')
+				star=
+				;;
+			*)
+				star=''
+				local="$maybe_star"
+				;;
+		esac
 
 		local_upstream="$local@{u}"
 

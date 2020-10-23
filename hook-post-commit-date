@@ -7,7 +7,19 @@ debug(){
 }
 
 show_commit_time(){
-	date -jf %s "$(git log -1 --format='%at' "$@")" +'%Y %m %d %H %M %S %z %a'
+	timestamp=$(git log -1 --format='%at' "$@")
+	fmt=+'%Y %m %d %H %M %S %z %a'
+	case $(uname | tr A-Z a-z) in
+		linux|mingw*)
+			date -d "@$timestamp" "$fmt"
+			;;
+		darwin)
+			date -jf %s "$timestamp" "$fmt"
+			;;
+		*)
+			echo >&2 "Unknown OS - need date impl"
+			exit 1
+	esac
 }
 
 if test -n "$POST_HOOK_ACTIVE"

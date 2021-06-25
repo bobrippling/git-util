@@ -6,9 +6,9 @@ then
 	exit 2
 fi
 
-red=$(printf '\x1b[31m')
-blue=$(printf '\x1b[34m')
-clear=$(printf '\x1b[0m')
+red="[31m"
+blue="[34m"
+clear="[0m"
 
 cat <<!
 ${red}git checkout [-p] tree -- pathspec

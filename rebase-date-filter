@@ -1,0 +1,15 @@
+#!/bin/sh
+
+while read cmd ci rest
+do
+	echo "$cmd $ci $rest"
+
+	if ! echo "$ci" | grep -iE '^[0-9a-f]+$' >/dev/null
+	then continue
+	fi
+
+	git log -1 --date=iso-strict --format='%cd %ad' "$ci" \
+		| (
+			read date_c date_a && echo "x git commit-when --committer $date_c $date_a --amend --no-e"
+		)
+done

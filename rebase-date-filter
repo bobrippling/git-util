@@ -1,10 +1,29 @@
 #!/bin/sh
 
+filter=
+case $# in
+	0)
+		;;
+	1)
+		if test "$1" = '--pick'
+		then filter=p
+		else usage
+		fi
+		;;
+	*)
+		usage
+		;;
+esac
+
 while read cmd ci rest
 do
 	echo "$cmd $ci $rest"
 
 	if ! echo "$ci" | grep -iE '^[0-9a-f]+$' >/dev/null
+	then continue
+	fi
+
+	if test -n "$filter" && test "${cmd:0:1}" != "$filter"
 	then continue
 	fi
 

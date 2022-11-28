@@ -1,0 +1,63 @@
+#!/bin/sh
+
+usage(){
+	echo >&2 "Usage: $0 [--author author] [--branch branch]"
+	exit 2
+}
+
+set -e
+
+auth=
+branch=
+upstream=$(git rev-parse --abbrev-ref @{u})
+
+while test $# -gt 0
+do
+	case "$1" in
+		--author)
+			shift
+			if test $# -eq 0
+			then usage
+			fi
+
+			if test -z "$auth"
+			then auth="$1"
+			else auth="$auth|$1"
+			fi
+			shift
+			;;
+		--branch)
+			shift
+			if test $# -eq 0
+			then usage
+			fi
+
+			if test -z "$branch"
+			then branch="$1"
+			else branch="$branch|$1"
+			fi
+			shift
+			;;
+		*)
+			usage
+			;;
+	esac
+done
+
+if test -z "$branch"
+then branch=.
+fi
+
+git br --remote \
+	| sed '/ /d' \
+	| grep -E "$branch" \
+	| while read b; do
+		auths=$(
+			git log "$upstream..$b" --format='%an %ae%n%cn %ce' | sort | uniq | sed 's/^/  /'
+		)
+		if test -z "$auth" || echo "$auths" | grep -E "$auth" >/dev/null
+		then
+			echo "$b:"
+			echo "$auths"
+		fi
+	done

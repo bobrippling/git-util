@@ -9,7 +9,7 @@ set -e
 
 auth=
 branch=
-upstream=$(git rev-parse --abbrev-ref @{u})
+upstream=$(git rev-parse --abbrev-ref @{u} 2>/dev/null || git rev-parse --abbrev-ref origin/HEAD)
 
 while test $# -gt 0
 do

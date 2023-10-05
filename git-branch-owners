@@ -48,6 +48,14 @@ if test -z "$branch"
 then branch=.
 fi
 
+col_branch=
+col_owner=
+if test -t 1
+then
+	col_branch=$(printf '\x1b[32m')
+	col_owner=$(printf '\x1b[34m')
+fi
+
 git br --remote \
 	| sed '/ /d' \
 	| grep -E "$branch" \
@@ -57,7 +65,7 @@ git br --remote \
 		)
 		if test -z "$auth" || echo "$auths" | grep -E "$auth" >/dev/null
 		then
-			echo "$b:"
-			echo "$auths"
+			echo "$col_branch$b:"
+			echo "$col_owner$auths"
 		fi
 	done

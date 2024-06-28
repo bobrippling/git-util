@@ -15,9 +15,21 @@ case $# in
 		;;
 esac
 
-while read cmd ci rest
+while read cmd ci rest0 rest
 do
-	echo "$cmd $ci $rest"
+	echo "$cmd $ci $rest0 $rest"
+
+	if test "$cmd" = merge
+	then
+		if test "$ci" != -C
+		then
+			echo >&2 "assertion failure parsing merge"
+			exit 1
+		fi
+		ci=$rest0
+	else
+		rest="$rest0 $rest"
+	fi
 
 	if ! echo "$ci" | grep -iE '^[0-9a-f]+$' >/dev/null
 	then continue

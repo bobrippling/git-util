@@ -41,6 +41,12 @@ do
 
 	git log -1 --date=iso-strict --format='%cd %ad' "$ci" \
 		| (
-			read date_c date_a && echo "x git commit-when --committer $date_c $date_a --amend --no-e"
+			if read date_c date_a
+			then
+				if test "$date_c" = "$date_a"
+				then echo "x git commit-when $date_a --amend --no-e"
+				else echo "x git commit-when --committer $date_c $date_a --amend --no-e"
+				fi
+			fi
 		)
 done

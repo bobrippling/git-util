@@ -1,0 +1,39 @@
+#!/bin/sh
+
+usage(){
+	echo >&2 "Usage: $0 refspec"
+	exit 2
+}
+
+if test $# -ne 1
+then usage
+fi
+
+git log --pretty=format:'%h %at %ct' "$1" \
+	| perl -nae '
+	use POSIX qw(strftime);
+
+	sub iso {
+		return strftime("%Y-%m-%dT%H:%M:%SZ", gmtime shift);
+	}
+
+	BEGIN {
+		$prev_ct = undef;
+		$ec = 0;
+	}
+
+	($hash, $at, $ct) = @F;
+
+	if ($ct < $at) {
+		warn "$hash: committer date (" . iso($ct) . ") < author date (" . iso($at) . ")\n";
+		$ec = 1;
+	}
+
+	if (defined $prev_ct && $ct > $prev_ct) {
+		warn "$hash: committer date (" . iso($ct) . ") < previous committer date (" . iso($prev_ct) . ")\n";
+		$ec = 1;
+	}
+
+	$prev_ct = $ct;
+	END { exit $ec }
+'

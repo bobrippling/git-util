@@ -5,7 +5,7 @@ usage(){
 	exit 2
 }
 
-if test $# -ne 1
+if test $# -ne 1 || echo "$1" | grep -q '^-'
 then usage
 fi
 

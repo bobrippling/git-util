@@ -19,6 +19,7 @@ git log --pretty=format:'%h %at %ct' "$1" \
 
 	BEGIN {
 		$prev_ct = undef;
+		$prev_ci = undef;
 		$ec = 0;
 	}
 
@@ -30,10 +31,11 @@ git log --pretty=format:'%h %at %ct' "$1" \
 	}
 
 	if (defined $prev_ct && $ct > $prev_ct) {
-		warn "$hash: committer date (" . iso($ct) . ") < previous committer date (" . iso($prev_ct) . ")\n";
+		warn "$hash: committer date (" . iso($ct) . ") < previous committer date (" . iso($prev_ct) . " / $prev_ci)\n";
 		$ec = 1;
 	}
 
 	$prev_ct = $ct;
+	$prev_ci = $hash;
 	END { exit $ec }
 '

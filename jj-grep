@@ -2,6 +2,10 @@
 
 use strict;
 use warnings;
+use constant {
+	JOB_LIMIT => 4,
+	DEBUG => ($ENV{DEBUG} || "") eq 1,
+};
 
 sub usage {
 	print STDERR "Usage: $0 [-r revset] [-i] pattern [fileset]\n";
@@ -53,27 +57,6 @@ sub forkexec_with_stdio {
 	return $pid;
 }
 
-sub lines {
-	pipe my $r, my $w;
-
-	my $dn = devnull();
-	my $finish = runpipe($dn, $w, \@_);
-	close $dn;
-	close $w;
-
-	my @lines;
-	while(<$r>){
-		chomp;
-		push @lines, $_;
-	}
-	close $r;
-
-	my $ec = $finish->();
-	exit $ec if $ec;
-
-	return @lines;
-}
-
 sub runpipe {
 	my($input, $output, @cmds) = @_;
 
@@ -103,6 +86,10 @@ sub runpipe {
 		$pids{$pid} = 1;
 		$last = $pid;
 
+		if(DEBUG){
+			print STDERR "$0: spawned [" . join(", ", map { "\"$_\"" } @{$cmds[$i]}) . "], pid $pid\n";
+		}
+
 		close $this_w;
 		close $this_r;
 	}
@@ -111,15 +98,24 @@ sub runpipe {
 
 	return sub {
 		my $ret;
-		while(keys %pids){
-			my $reaped = wait();
+		for my $candidate (keys %pids){
+			my $reaped = waitpid $candidate, 0; # must wait for only pids that we're looking after
 			my $ec = $? >> 8;
 			my $no_children = $reaped == -1;
-			die "logic error" if $no_children;
+			die "logic error: no children to reap but have pids [" . join(", ", keys %pids) . "]" if $no_children;
 
-			delete $pids{$reaped};
+			if(DEBUG){
+				print STDERR "$0: finish(), reaped $reaped, ec $ec" . ($reaped == $last ? " (pipeline tail)" : "") . "\n";
+			}
+
+			my $elem = delete $pids{$reaped};
+			die "$reaped isn't in the pid list" unless defined $elem;
 
 			$ret = $ec if $reaped == $last;
+		}
+
+		if(DEBUG){
+			print STDERR "$0: pipeline complete, ec=$ret\n";
 		}
 
 		die "final child in pipeline didn't exit?" unless defined $ret;
@@ -132,23 +128,149 @@ sub devnull {
 	return $in;
 }
 
-my @revisions = lines(
+sub lines {
+	pipe my $r, my $w;
+
+	my $dn = devnull();
+	my $finish = runpipe($dn, $w, \@_);
+	close $dn;
+	close $w;
+
+	return Job::new($r, $finish)->to_fn(retcheck => 1);
+}
+
+package Job {
+	sub new {
+		my($rh, $finish) = @_;
+
+		return bless {
+			finish => $finish,
+			rh => $rh,
+			ec => undef,
+		};
+	}
+
+	sub fileno {
+		return fileno(shift->{rh});
+	}
+
+	sub next_line {
+		my $self = shift;
+
+		my $fh = $self->{rh};
+		my $line = <$fh>;
+		return $line if defined $line;
+
+		close $fh;
+		$self->{ec} = $self->{finish}->();
+		delete $self->{finish};
+		return undef;
+	}
+
+	sub to_fn {
+		my($self, %opts) = shift;
+
+		return sub {
+			my $line = $self->next_line();
+
+			if(defined $line){
+				chomp $line;
+				return $line;
+			}else{
+				die "logic error" if defined $self->{finish};
+
+				my $ec = $self->{ec};
+				exit $ec if $opts{retcheck} && $ec;
+			}
+		};
+	}
+}
+
+package GrepJob {
+	sub new {
+		my($job, $rev, $fname) = @_;
+
+		return bless {
+			job => $job,
+			rev => $rev,
+			fname => $fname,
+			found => 0,
+		};
+	}
+
+	sub next_line {
+		my $self = shift;
+
+		my $line = $self->{job}->next_line();
+
+		return 0 unless defined $line;
+
+		print "$self->{rev}:$self->{fname}:$line";
+		$self->{found} = 1;
+		return 1;
+	}
+}
+
+sub reap_jobs {
+	my($jobs, $finished) = @_;
+	my @reaped;
+
+	if(DEBUG){
+		print STDERR "$0: reaping...\n";
+	}
+
+	while(@reaped == 0){
+		my $rin = my $win = '';
+
+		for my $gj (@$jobs) {
+			vec($rin, $gj->{job}->fileno(), 1) = 1;
+		}
+
+		my $ein = $rin | $win;
+
+		my $timeout = undef;
+		my $nfound = select(my $rout = $rin, my $wout = $win, my $eout = $ein, $timeout);
+
+		for(my $i = 0; $i < @$jobs; $i++){
+			my $gj = $jobs->[$i];
+			my $fileno = $gj->{job}->fileno();
+
+			if(vec($rout, $fileno, 1) || vec($eout, $fileno, 1)){
+				if(!$gj->next_line()){
+					# finished, remove from list
+					splice @$jobs, $i, 1;
+					$i--;
+					push @reaped, $gj;
+				}
+			}
+		}
+	}
+
+	push @$finished, @reaped;
+
+	if(DEBUG){
+		print STDERR "$0: done reaping\n";
+	}
+}
+
+my $rev_gen = lines(
 	"jj", "log",
 	"-r", $revset,
 	"-T", 'change_id.short() ++ "\\n"',
 	"-G",
 );
 
-my $ec = 1;
-for my $rev (@revisions) {
-	my @files = lines(
+my @jobs;
+my @finished;
+while(my $rev = $rev_gen->()){
+	my $fname_gen = lines(
 		"jj", "file", "list",
 		"--revision", $rev,
 		"--template", 'if(file_type == "file", path ++ "\\n")',
 		defined $fileset ? ($fileset) : (),
 	);
 
-	for my $file (@files){
+	while(my $fname = $fname_gen->()){
 		pipe my $r, my $w;
 
 		my $dn = devnull();
@@ -156,7 +278,7 @@ for my $rev (@revisions) {
 			$dn,
 			$w,
 			[
-				"jj", "file", "show", "--revision", $rev, $file,
+				"jj", "file", "show", "--revision", $rev, $fname,
 			],
 			[
 				"grep", "-En", "--color=always", defined $grep_flags ? ($grep_flags) : (), $pat,
@@ -165,14 +287,19 @@ for my $rev (@revisions) {
 		close $dn;
 		close $w;
 
-		while(<$r>){
-			print "$rev:$file:$_";
-			$ec = 0; # found
-		}
-		close $r;
-
-		my $_ec = $finish->();
+		push @jobs, GrepJob::new(Job::new($r, $finish), $rev, $fname);
+		reap_jobs(\@jobs, \@finished) while @jobs > JOB_LIMIT;
 	}
 }
 
+reap_jobs(\@jobs, \@finished) while @jobs;
+
+my $ec = 1;
+for my $j (@finished){
+	if($j->{found}){
+		$ec = 0;
+		last;
+	}
+	# ignore $j->{ec}
+}
 exit $ec;

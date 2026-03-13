@@ -1,0 +1,178 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+sub usage {
+	print STDERR "Usage: $0 [-r revset] [-i] pattern [fileset]\n";
+	exit 2;
+}
+
+my $pat;
+my $revset;
+my $fileset;
+my $grep_flags;
+
+while(@ARGV){
+	$_ = shift;
+
+	if($_ eq '-i'){
+		$grep_flags = $_;
+	}elsif($_ eq '-r'){
+		usage() if defined $revset || @ARGV == 0;
+
+		$revset = shift;
+	}elsif(/^-/){
+		usage();
+	}elsif(!defined $pat){
+		$pat = $_;
+	}elsif(!defined $fileset){
+		$fileset = $_;
+	}else{
+		usage();
+	}
+}
+
+$revset = "@" unless defined $revset;
+
+sub forkexec_with_stdio {
+	my($cmdlist, $r, $w) = @_;
+
+	my $pid = fork();
+	die "fork: $!" unless defined $pid;
+
+	if($pid == 0){
+		open STDIN, "<&", $r or die "dup: $!";
+		close $r;
+		open STDOUT, ">&", $w or die "dup: $!";
+		close $w;
+		exec @$cmdlist;
+		die "exec $cmdlist->[0]: $!";
+	}
+
+	return $pid;
+}
+
+sub lines {
+	pipe my $r, my $w;
+
+	my $dn = devnull();
+	my $finish = runpipe($dn, $w, \@_);
+	close $dn;
+	close $w;
+
+	my @lines;
+	while(<$r>){
+		chomp;
+		push @lines, $_;
+	}
+	close $r;
+
+	my $ec = $finish->();
+	exit $ec if $ec;
+
+	return @lines;
+}
+
+sub runpipe {
+	my($input, $output, @cmds) = @_;
+
+	my $carry_r;
+	my %pids;
+	my $last;
+
+	for(my $i = 0; $i < @cmds; $i++){
+		my $this_r;
+		my $this_w;
+
+		if($i == 0){
+			open $this_r, '<&', $input or die "dup stdin: $!";
+			die "logic error: have an initial carry pipe?" if defined $carry_r;
+		}else{
+			$this_r = $carry_r;
+			$carry_r = undef;
+		}
+		if($i == $#cmds){
+			open $this_w, '>&', $output or die "dup stdout: $!";
+			die "logic error: have a final unconsumed carry pipe?" if defined $carry_r;
+		}else{
+			pipe $carry_r, $this_w or die "pipe: $!";
+		}
+
+		my $pid = forkexec_with_stdio($cmds[$i], $this_r, $this_w);
+		$pids{$pid} = 1;
+		$last = $pid;
+
+		close $this_w;
+		close $this_r;
+	}
+
+	die "logic error: have an open read pipe" if defined $carry_r;
+
+	return sub {
+		my $ret;
+		while(keys %pids){
+			my $reaped = wait();
+			my $ec = $? >> 8;
+			my $no_children = $reaped == -1;
+			die "logic error" if $no_children;
+
+			delete $pids{$reaped};
+
+			$ret = $ec if $reaped == $last;
+		}
+
+		die "final child in pipeline didn't exit?" unless defined $ret;
+		return $ret;
+	};
+}
+
+sub devnull {
+	open my $in, '</dev/null' or die "open: $!";
+	return $in;
+}
+
+my @revisions = lines(
+	"jj", "log",
+	"-r", $revset,
+	"-T", 'change_id.short() ++ "\\n"',
+	"-G",
+);
+
+my $ec = 1;
+for my $rev (@revisions) {
+	my @files = lines(
+		"jj", "file", "list",
+		"--revision", $rev,
+		"--template", 'if(file_type == "file", path ++ "\\n")',
+		defined $fileset ? ($fileset) : (),
+	);
+
+	for my $file (@files){
+		pipe my $r, my $w;
+
+		my $dn = devnull();
+		my $finish = runpipe(
+			$dn,
+			$w,
+			[
+				"jj", "file", "show", "--revision", $rev, $file,
+			],
+			[
+				"grep", "-En", "--color=always", defined $grep_flags ? ($grep_flags) : (), $pat,
+			],
+		);
+		close $dn;
+		close $w;
+
+		while(<$r>){
+			print "$rev:$file:$_";
+			$ec = 0; # found
+		}
+		close $r;
+
+		my $_ec = $finish->();
+	}
+}
+
+exit $ec;

@@ -1,0 +1,64 @@
+#!/bin/sh
+
+set -e
+
+usage(){
+	echo >&2 "Usage: $0 [--committer yyyy-mm-ddThh:mm:ss] [-r revset] yyyy-mm-ddThh:mm:ss"
+	echo >&2 "--committer: Specify committer date (defaults to given author date)"
+	echo >&2 "-r revset: the revision(s) to operate on, defaults to @ [-r revset]"
+	exit 2
+}
+
+when=
+committer_when=
+revset=
+when=
+while test $# -gt 0
+do
+	case "$1" in
+		--committer)
+			shift
+			if test $# -eq 0
+			then usage
+			fi
+			committer_when="$1"
+			shift
+			;;
+		-r)
+			shift
+			if test $# -eq 0
+			then usage
+			fi
+			revset="$1"
+			shift
+			;;
+		*)
+			if test -z "$when"
+			then
+				when="$1"
+				shift
+			else
+				usage
+			fi
+			;;
+	esac
+done
+
+if test -z "$when"
+then
+	echo >&2 "$0: no date specified"
+	usage
+fi
+
+if test -z "$revset"
+then revset="@"
+fi
+
+if test -z "$committer_when"
+then committer_when=$when
+fi
+
+JJ_TIMESTAMP="$committer_when" \
+jj metaedit \
+	--author-timestamp "$when" \
+	"$revset"

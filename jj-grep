@@ -3,12 +3,11 @@
 use strict;
 use warnings;
 use constant {
-	JOB_LIMIT => 4,
 	DEBUG => ($ENV{DEBUG} || "") eq 1,
 };
 
 sub usage {
-	print STDERR "Usage: $0 [-r revset] [-i] pattern [fileset]\n";
+	print STDERR "Usage: $0 [-r revset] [-i] [-j jobs] pattern [fileset]\n";
 	exit 2;
 }
 
@@ -16,6 +15,7 @@ my $pat;
 my $revset;
 my $fileset;
 my $grep_flags;
+my $job_limit = 4;
 
 while(@ARGV){
 	$_ = shift;
@@ -26,6 +26,11 @@ while(@ARGV){
 		usage() if defined $revset || @ARGV == 0;
 
 		$revset = shift;
+	}elsif($_ eq '-j'){
+		usage() if @ARGV == 0;
+
+		$job_limit = shift;
+		usage() if $job_limit !~ /^[0-9]+$/ || $job_limit == 0;
 	}elsif(/^-/){
 		usage();
 	}elsif(!defined $pat){

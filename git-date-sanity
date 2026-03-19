@@ -9,6 +9,14 @@ if test $# -ne 1 || echo "$1" | grep -q '^-'
 then usage
 fi
 
+merges=$(git rev-list --merges --abbrev-commit "$1")
+if test -n "$merges"
+then
+	echo >&2 "$0: revset \"$1\" contains merges:"
+	echo >&2 "$merges"
+	exit 1
+fi
+
 git log --pretty=format:'%h %at %ct' "$1" \
 	| perl -nae '
 	use POSIX qw(strftime);

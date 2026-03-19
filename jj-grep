@@ -293,7 +293,7 @@ while(my $rev = $rev_gen->()){
 		close $w;
 
 		push @jobs, GrepJob::new(Job::new($r, $finish), $rev, $fname);
-		reap_jobs(\@jobs, \@finished) while @jobs > JOB_LIMIT;
+		reap_jobs(\@jobs, \@finished) while @jobs > $job_limit;
 	}
 }
 

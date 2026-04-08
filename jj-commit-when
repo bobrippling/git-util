@@ -5,7 +5,7 @@ set -e
 usage(){
 	echo >&2 "Usage: $0 [--committer yyyy-mm-ddThh:mm:ss] [-r revset] yyyy-mm-ddThh:mm:ss"
 	echo >&2 "--committer: Specify committer date (defaults to given author date)"
-	echo >&2 "-r revset: the revision(s) to operate on, defaults to @ [-r revset]"
+	echo >&2 "-r revset: the revision(s) to operate on, defaults to @"
 	exit 2
 }
 

@@ -44,6 +44,8 @@ while(@ARGV){
 
 $revset = "@" unless defined $revset;
 
+usage() unless defined $pat;
+
 sub forkexec_with_stdio {
 	my($cmdlist, $r, $w) = @_;
 
